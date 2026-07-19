@@ -1,5 +1,7 @@
 import express from "express";
+import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
 import { serve } from "inngest/express";
 
@@ -9,9 +11,7 @@ import { inngest, functions } from "./lib/inngest.js";
 import User from "./models/User.js";
 
 const app = express();
-
-const __dirname=path.resolve();
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // middleware
 app.use(express.json());
@@ -50,17 +50,19 @@ app.post("/api/users", async (req, res) => {
   }
 });
 
-app.get("/health",(req,res) =>{
-    res.status(200).json({msg:"success from api"})
+app.get("/health", (req, res) => {
+  res.status(200).json({ msg: "success from api" });
 });
 
-if (ENV.NODE_ENV === "production") {
-  const frontendDist = path.resolve(__dirname, "../../frontend/dist");
+const frontendDist = path.resolve(__dirname, "../../frontend/dist");
+if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
 
   app.get("/*", (req, res) => {
     res.sendFile(path.join(frontendDist, "index.html"));
   });
+} else {
+  console.warn("Frontend dist folder not found, static site will not be served:", frontendDist);
 }
 
 const startServer = async () => {
