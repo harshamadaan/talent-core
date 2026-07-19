@@ -32,11 +32,13 @@ app.get("/health",(req,res) =>{
     res.status(200).json({msg:"success from api"})
 });
 
-if(ENV.NODE_ENV === "production"){
-    app.use(express.static(path.join(__dirname,"../frontend/dist")));
+if (ENV.NODE_ENV === "production") {
+  const frontendDist = path.resolve(__dirname, "../../frontend/dist");
 
-    app.get("/{*any}", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  app.use(express.static(frontendDist));
+
+  app.get("/*", (req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
   });
 }
 
