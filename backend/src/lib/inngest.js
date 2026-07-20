@@ -12,6 +12,8 @@ const syncUser = inngest.createFunction(
     triggers: [{ event: "clerk/user.created" }],
   },
   async ({ event }) => {
+
+    //syncing user to mongodb
     await connectDB();
 
     const {
@@ -31,9 +33,18 @@ const syncUser = inngest.createFunction(
 
     await User.create(newUser);
 
-    // TODO: do something else
-  }
+   //syncing users to stream
+    await upsertStreamUser({
+      id: newUser.clerkId.toString(),
+      name: newUser.name,
+      image: newUser.profileImage,
+    });
+
+    //Send a Welcome email ro the user in future
+  },
 );
+  
+
 
 const deleteUserFromDB = inngest.createFunction(
   {
@@ -41,13 +52,15 @@ const deleteUserFromDB = inngest.createFunction(
     triggers: [{ event: "clerk/user.deleted" }],
   },
   async ({ event }) => {
+     //mongo db user deletion when clerk user is deleted
     await connectDB();
 
     const { id } = event.data;
 
     await User.deleteOne({ clerkId: id });
 
-    // TODO: do something else
+    //stream user deletion when clerk user is deleted
+    await deleteStreamUser(id.toString());
   }
 );
 
